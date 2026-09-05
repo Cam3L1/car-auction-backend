@@ -1,5 +1,5 @@
 -- =============================================================
--- CarBid - Online Car Auction Platform
+-- MazadJo - Online Car Auction Platform
 -- Database Schema + Seed Data (PostgreSQL)
 -- Run this file to recreate the database with realistic data.
 -- =============================================================
