@@ -1,6 +1,6 @@
-# 🚗 CarBid — Backend API
+# MazadJo — Backend API
 
-REST API for **CarBid**, an online car auction platform. Built with **Node.js, Express.js and PostgreSQL** for the *Special Topics in Computer Science 1* full-stack assignment.
+REST API for **MazadJo**, an online car auction platform. Built with **Node.js, Express.js and PostgreSQL** for the *Special Topics in Computer Science 1* full-stack assignment.
 
 > Frontend repository: [car-auction-frontend](https://github.com/Cam3L1/car-auction-frontend)
 
@@ -93,7 +93,7 @@ npm start
 The API is now available at `http://localhost:5001`. You should see:
 
 ```
-🚗 CarBid API is running
+MazadJo API is running
 ```
 
 ### Seed accounts
