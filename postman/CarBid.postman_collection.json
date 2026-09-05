@@ -1,0 +1,338 @@
+{
+  "info": {
+    "name": "CarBid API",
+    "description": "REST API collection for the CarBid online car auction platform.\n\nSetup:\n1. Run the backend (npm run dev) with the car_auction database seeded (schema.sql).\n2. Login as a normal user (e.g. sara@example.com / password123) - the login request stores the JWT in the `token` collection variable automatically.\n3. Login as admin@carbid.com / admin123 before using the Admin folder.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5001/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (normal user)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new_bidder\",\n  \"email\": \"new@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('returns a JWT', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sara@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - wrong password (expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sara@example.com\",\n  \"password\": \"wrong\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cars",
+      "item": [
+        {
+          "name": "List active auctions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cars",
+              "host": ["{{base_url}}"],
+              "path": ["cars"],
+              "query": [{ "key": "q", "value": "", "disabled": true }, { "key": "make", "value": "", "disabled": true }, { "key": "status", "value": "all", "disabled": true }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('every listing is active', () => pm.expect(pm.response.json().every(c => c.status === 'active')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search (q=tesla)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cars?q=tesla",
+              "host": ["{{base_url}}"],
+              "path": ["cars"],
+              "query": [{ "key": "q", "value": "tesla" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns a Tesla', () => pm.expect(pm.response.json()[0].make).to.eql('Tesla'));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Car details + bid history",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/cars/6", "host": ["{{base_url}}"], "path": ["cars", "6"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has bids + winner', () => { const d = pm.response.json(); pm.expect(d.bids.length).to.be.greaterThan(0); pm.expect(d.winner).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create listing (auth required)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mazda 6 2021 - Grand Touring\",\n  \"make\": \"Mazda\",\n  \"model\": \"6\",\n  \"year\": 2021,\n  \"mileage\": 39000,\n  \"description\": \"Well maintained, full service history.\",\n  \"image_url\": \"https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&q=80\",\n  \"starting_price\": 14000,\n  \"end_time\": \"2030-01-01T00:00:00.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/cars", "host": ["{{base_url}}"], "path": ["cars"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 201', () => pm.response.to.have.status(201));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place bid (validation checks)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 13000\n}"
+            },
+            "url": { "raw": "{{base_url}}/cars/1/bids", "host": ["{{base_url}}"], "path": ["cars", "1", "bids"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 201 (or 400/403 rule violation)', () => pm.expect([201, 400, 403]).to.include(pm.response.code));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place bid - below min increment (expect 400)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 12850\n}" },
+            "url": { "raw": "{{base_url}}/cars/1/bids", "host": ["{{base_url}}"], "path": ["cars", "1", "bids"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "My profile (seller + bidder views)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/users/profile", "host": ["{{base_url}}"], "path": ["users", "profile"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has sellerCars and bidderCars', () => { const d = pm.response.json(); pm.expect(d.sellerCars).to.be.an('array'); pm.expect(d.bidderCars).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "All auctions (monitoring)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/cars", "host": ["{{base_url}}"], "path": ["admin", "cars"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Platform bidding log",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/bids", "host": ["{{base_url}}"], "path": ["admin", "bids"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete a bid (price reverts)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/admin/bids/8", "host": ["{{base_url}}"], "path": ["admin", "bids", "8"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('price reverted to previous highest', () => pm.expect(pm.response.json().newCurrentPrice).to.eql(33500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel a listing (bids voided)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "url": { "raw": "{{base_url}}/admin/cars/4/cancel", "host": ["{{base_url}}"], "path": ["admin", "cars", "4", "cancel"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete a listing",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/admin/cars/8", "host": ["{{base_url}}"], "path": ["admin", "cars", "8"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
