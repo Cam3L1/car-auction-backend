@@ -24,7 +24,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
-  res.send("🚗 CarBid API is running");
+  res.send("MazadJo API is running");
 });
 
 // global error handler: every failed request returns a JSON response

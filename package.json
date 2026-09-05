@@ -1,7 +1,7 @@
 {
   "name": "car-auction-backend",
   "version": "1.0.0",
-  "description": "CarBid - Online car auction platform REST API (Node.js + Express + PostgreSQL)",
+  "description": "MazadJo - Online car auction platform REST API (Node.js + Express + PostgreSQL)",
   "main": "server.js",
   "type": "module",
   "scripts": {

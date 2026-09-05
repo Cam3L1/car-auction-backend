@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "CarBid API",
-    "description": "REST API collection for the CarBid online car auction platform.\n\nSetup:\n1. Run the backend (npm run dev) with the car_auction database seeded (schema.sql).\n2. Login as a normal user (e.g. sara@example.com / password123) - the login request stores the JWT in the `token` collection variable automatically.\n3. Login as admin@carbid.com / admin123 before using the Admin folder.",
+    "name": "MazadJo API",
+    "description": "REST API collection for the MazadJo online car auction platform.\n\nSetup:\n1. Run the backend (npm run dev) with the car_auction database seeded (schema.sql).\n2. Login as a normal user (e.g. sara@example.com / password123) - the login request stores the JWT in the `token` collection variable automatically.\n3. Login as admin@carbid.com / admin123 before using the Admin folder.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
