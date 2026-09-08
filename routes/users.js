@@ -4,21 +4,10 @@ import auth from "../middleware/auth.js";
 import { finalizeExpiredAuctions } from "../utils/auctions.js";
 const router = express.Router();
 
-// ============ GET /api/users/profile ============
-// Auth: any logged-in user. The user's id comes from the JWT
-// (req.user.id) - the client does NOT send it, so one user can never
-// request another user's dashboard.
-//
-// Returns the data for BOTH sides of the profile page:
-//   sellerCars - every listing the user created (seller view)
-//   bidderCars - every car the user bid on   (bidder view)
+// GET /api/users/profile - seller + bidder dashboard data
 router.get("/profile", auth, async (req, res) => {
   await finalizeExpiredAuctions();
 
-  // --- seller view -------------------------------------------------
-  // One row per listing created by this user, plus two subqueries:
-  //   highest_bid = the largest bid so far (or NULL when no bids yet)
-  //   bid_count   = how many bids were placed in total
   const sellerCars = await db.query(
     `SELECT c.*, u.username AS seller,
             (SELECT b.amount FROM bids b WHERE b.car_id = c.id ORDER BY b.amount DESC LIMIT 1) AS highest_bid,
@@ -30,12 +19,6 @@ router.get("/profile", auth, async (req, res) => {
     [req.user.id]
   );
 
-  // --- bidder view -------------------------------------------------
-  // Finds every car that has at least one bid FROM this user.
-  //   my_highest_bid = the user's own highest bid on that car (MAX)
-  //   top_bidder_id  = who currently leads the auction overall
-  // The frontend compares top_bidder_id with the user's id to show
-  // "Highest bidder" / "Outbid" / "You won!" badges.
   const bidderCars = await db.query(
     `SELECT c.*, u.username AS seller,
             MAX(b.amount) AS my_highest_bid,
