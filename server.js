@@ -19,11 +19,13 @@ const PORT = process.env.PORT || 5001;
 //   browser → cors() → express.json() → morgan() → router → handler
 //
 // 1. cors()          adds the CORS headers that let the React frontend
-//                    (a different origin) call this API from the browser
+//                    (a different origin) call this API from the browser.
+//                    In production FRONTEND_URL is the deployed React app
+//                    (set on Railway); locally it stays open for dev.
 // 2. express.json()  reads the request body and attaches it to req.body
 //                    as a JS object (for POST/PUT requests)
 // 3. morgan("dev")   prints one short log line per request to the console
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 app.use(morgan("dev"));
 
